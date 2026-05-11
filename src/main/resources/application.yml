@@ -14,10 +14,11 @@ spring:
     open-in-view: ${JPA_OPEN_IN_VIEW:false}
 
 minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  bucket: ${MINIO_BUCKET:horus}
+  endpoint: ${STORAGE_ENDPOINT:${MINIO_ENDPOINT:http://localhost:9000}}
+  access-key: ${STORAGE_ACCESS_KEY:${MINIO_ACCESS_KEY:minioadmin}}
+  secret-key: ${STORAGE_SECRET_KEY:${MINIO_SECRET_KEY:minioadmin}}
+  bucket: ${STORAGE_BUCKET:${MINIO_BUCKET:horus}}
+  public-base-url: ${STORAGE_PUBLIC_BASE_URL:${MINIO_PUBLIC_BASE_URL:}}
 
 ai:
   api:
@@ -25,7 +26,7 @@ ai:
     predict-path: ${AI_API_PREDICT_PATH:/predict}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}}
 
 app:
   cors:

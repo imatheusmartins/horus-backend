@@ -31,10 +31,11 @@ Variaveis principais:
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
-- `MINIO_ENDPOINT`
-- `MINIO_ACCESS_KEY`
-- `MINIO_SECRET_KEY`
-- `MINIO_BUCKET`
+- `STORAGE_ENDPOINT`
+- `STORAGE_ACCESS_KEY`
+- `STORAGE_SECRET_KEY`
+- `STORAGE_BUCKET`
+- `STORAGE_PUBLIC_BASE_URL`
 - `AI_API_BASE_URL`
 - `AI_API_PREDICT_PATH`
 - `SERVER_PORT`
@@ -63,6 +64,36 @@ No Windows:
 ```powershell
 .\mvnw.cmd test
 ```
+
+## CI/CD
+
+O projeto agora possui um workflow de CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) que:
+
+- roda em `push` para `main` e `develop`
+- roda em `pull_request`
+- configura Java 21
+- executa `./mvnw clean verify`
+
+Para CD simples, a recomendacao e usar deploy automatico da plataforma de hospedagem apos o CI passar, em vez de criar uma pipeline de release mais complexa.
+
+## Hospedagem recomendada
+
+Se a prioridade for manter o projeto gratis, a melhor rota hoje e:
+
+- Render Free para o backend
+- Supabase para o PostgreSQL
+- Supabase Storage para os arquivos
+
+Se a prioridade for simplificar a infraestrutura e voces puderem aceitar um custo baixo, o Railway continua sendo a alternativa mais simples.
+
+O projeto ficou pronto para PaaS com:
+
+- suporte a `PORT` em producao
+- endpoint `GET /health` para health checks
+- `Dockerfile` para deploy consistente
+- suporte a URL publica estavel para storage compativel com S3 via `STORAGE_PUBLIC_BASE_URL`
+
+Um guia objetivo de deploy esta em [docs/deploy-tcc.md](docs/deploy-tcc.md).
 
 ## Endpoints
 
