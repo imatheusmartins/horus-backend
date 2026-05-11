@@ -35,8 +35,10 @@ Variaveis principais:
 - `MINIO_ACCESS_KEY`
 - `MINIO_SECRET_KEY`
 - `MINIO_BUCKET`
-- `AI_SERVICE_URL`
+- `AI_API_BASE_URL`
+- `AI_API_PREDICT_PATH`
 - `SERVER_PORT`
+- `APP_CORS_ALLOWED_ORIGINS`
 
 ## Executar
 
@@ -66,6 +68,8 @@ No Windows:
 
 - `POST /auth/register`
 - `POST /auth/login`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 - `GET /usuarios/{id}`
 - `PUT /usuarios/{id}`
 - `DELETE /usuarios/{id}`
@@ -78,3 +82,41 @@ No Windows:
 - `GET /exames/paciente/{pacienteId}`
 - `GET /exames/{id}`
 - `DELETE /exames/{id}`
+
+## Integracao com frontend local
+
+Para a tela de login em React, o backend agora aceita chamadas tanto para `/auth/login` quanto para `/api/auth/login`.
+
+Exemplo de requisicao:
+
+```json
+{
+  "email": "usuario@exemplo.com",
+  "senha": "123456"
+}
+```
+
+Tambem aceita o campo `password` no lugar de `senha`, caso seu frontend esteja nesse formato.
+
+Resposta de sucesso:
+
+```json
+{
+  "id": 1,
+  "nome": "Usuario",
+  "email": "usuario@exemplo.com",
+  "token": "token-provisorio"
+}
+```
+
+Resposta de erro:
+
+```json
+{
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "Email ou senha inválidos",
+  "timestamp": "2026-05-10T19:00:00",
+  "details": []
+}
+```

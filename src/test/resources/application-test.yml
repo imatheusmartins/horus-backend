@@ -16,5 +16,6 @@ minio:
   bucket: horus-test
 
 ai:
-  service:
-    url: http://localhost:8000
+  api:
+    base-url: http://localhost:8000
+    predict-path: /predict

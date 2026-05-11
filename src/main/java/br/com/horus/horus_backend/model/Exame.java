@@ -2,6 +2,7 @@ package br.com.horus.horus_backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -20,6 +21,10 @@ public class Exame {
     private String urlImagemOriginal;
 
     private String urlImagemAnotada;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String resultadoIa;
 
     private LocalDateTime dataExame;
 
