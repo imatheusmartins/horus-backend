@@ -4,7 +4,7 @@ Backend Spring Boot do projeto Horus.
 
 ## Tecnologias
 
-- Java 21
+- Java 17
 - Spring Boot
 - Maven Wrapper
 - PostgreSQL
@@ -51,6 +51,41 @@ No Windows:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
+```
+
+### Executar com banco local H2
+
+Na branch `local-h2-dev`, o perfil `local` e usado por padrao quando nenhum perfil for informado. Entao voce pode subir o backend sem PostgreSQL/Supabase com:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Se quiser informar o perfil explicitamente:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="local"
+.\mvnw.cmd spring-boot:run
+```
+
+Esse perfil usa H2 em arquivo e grava os dados em `data/horus-local`, que fica fora do Git. O console do H2 fica disponivel em:
+
+```text
+http://localhost:8080/h2-console
+```
+
+Use estes dados no console:
+
+```text
+JDBC URL: jdbc:h2:file:./data/horus-local;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
+User Name: sa
+Password: deixe em branco
+```
+
+Se a porta `8080` ja estiver em uso, rode em outra porta:
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--server.port=8081"
 ```
 
 ## Testes

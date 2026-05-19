@@ -9,7 +9,10 @@ target/
 .env.*
 !.env.example
 application-local.yml
-src/main/resources/application-local.yml
+!src/main/resources/application-local.yml
+
+### Local H2 database ###
+data/
 
 ### Logs ###
 *.log
