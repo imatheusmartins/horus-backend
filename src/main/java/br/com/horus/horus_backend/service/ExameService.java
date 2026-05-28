@@ -22,7 +22,6 @@ public class ExameService {
 
     private final ExameRepository exameRepository;
     private final PacienteRepository pacienteRepository;
-    private final MinioStorageService minioStorageService;
     private final AiDetectionService aiDetectionService;
     private final ObjectMapper objectMapper;
 
@@ -30,12 +29,11 @@ public class ExameService {
         Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
                 .orElseThrow(() -> new RuntimeException("Paciente nao encontrado"));
 
-        String urlOriginal = minioStorageService.upload(imagem, "original");
         AiPredictionResponseDTO analiseIA = aiDetectionService.analisar(imagem);
 
         Exame exame = new Exame();
         exame.setPaciente(paciente);
-        exame.setUrlImagemOriginal(urlOriginal);
+        exame.setUrlImagemOriginal(null);
         exame.setUrlImagemAnotada(null);
         exame.setResultadoIa(toJson(analiseIA));
 

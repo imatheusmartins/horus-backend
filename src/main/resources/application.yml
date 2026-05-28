@@ -13,13 +13,6 @@ spring:
     show-sql: ${JPA_SHOW_SQL:true}
     open-in-view: ${JPA_OPEN_IN_VIEW:false}
 
-minio:
-  endpoint: ${STORAGE_ENDPOINT:${MINIO_ENDPOINT:http://localhost:9000}}
-  access-key: ${STORAGE_ACCESS_KEY:${MINIO_ACCESS_KEY:minioadmin}}
-  secret-key: ${STORAGE_SECRET_KEY:${MINIO_SECRET_KEY:minioadmin}}
-  bucket: ${STORAGE_BUCKET:${MINIO_BUCKET:horus}}
-  public-base-url: ${STORAGE_PUBLIC_BASE_URL:${MINIO_PUBLIC_BASE_URL:}}
-
 ai:
   api:
     base-url: ${AI_API_BASE_URL:http://localhost:8000}
