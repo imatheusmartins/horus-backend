@@ -6,7 +6,9 @@ import br.com.horus.horus_backend.model.Usuario;
 import br.com.horus.horus_backend.repository.PacienteRepository;
 import br.com.horus.horus_backend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,10 @@ public class PacienteService {
     }
 
     public List<PacienteResponseDTO> listarPorUsuario(Long usuarioId) {
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado");
+        }
+
         return pacienteRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::toResponse)
