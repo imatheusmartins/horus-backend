@@ -6,4 +6,6 @@ import lombok.Data;
 public class AiPredictionItemDTO {
     private String label;
     private Double confidence;
+    private String description;
+    private String descricao;
 }

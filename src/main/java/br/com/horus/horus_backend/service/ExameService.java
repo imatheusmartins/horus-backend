@@ -1,6 +1,7 @@
 package br.com.horus.horus_backend.service;
 
 import br.com.horus.horus_backend.dto.ai.AiPredictionResponseDTO;
+import br.com.horus.horus_backend.dto.ai.AiPredictionItemDTO;
 import br.com.horus.horus_backend.dto.exame.ExameRequestDTO;
 import br.com.horus.horus_backend.dto.exame.ExameResponseDTO;
 import br.com.horus.horus_backend.model.Exame;
@@ -10,39 +11,87 @@ import br.com.horus.horus_backend.repository.PacienteRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExameService {
 
     private final ExameRepository exameRepository;
     private final PacienteRepository pacienteRepository;
     private final AiDetectionService aiDetectionService;
+    private final FileStorageService fileStorageService;
     private final ObjectMapper objectMapper;
 
+    @Transactional
     public ExameResponseDTO criar(ExameRequestDTO dto, MultipartFile imagem) {
+        if (dto == null || dto.getPacienteId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Paciente do exame e obrigatorio");
+        }
+
+        log.info(
+                "Criando exame. pacienteId={}, arquivo={}, contentType={}, tamanhoBytes={}",
+                dto.getPacienteId(),
+                imagem != null ? imagem.getOriginalFilename() : null,
+                imagem != null ? imagem.getContentType() : null,
+                imagem != null ? imagem.getSize() : null);
+
         Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
-                .orElseThrow(() -> new RuntimeException("Paciente nao encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente nao encontrado"));
 
-        AiPredictionResponseDTO analiseIA = aiDetectionService.analisar(imagem);
+        Exame exame = exameRepository.saveAndFlush(novoExame(paciente));
+        String urlImagemOriginal = null;
+        String urlImagemAnotada = null;
 
-        Exame exame = new Exame();
-        exame.setPaciente(paciente);
-        exame.setUrlImagemOriginal(null);
-        exame.setUrlImagemAnotada(null);
-        exame.setResultadoIa(toJson(analiseIA));
+        try {
+            urlImagemOriginal = fileStorageService.salvarImagemExame(imagem, exame.getId(), "original");
+            log.info("Imagem original salva. exameId={}, urlImagemOriginal={}", exame.getId(), urlImagemOriginal);
 
-        exameRepository.save(exame);
+            AiPredictionResponseDTO analiseIA = aiDetectionService.analisar(imagem);
+            urlImagemAnotada = getUrlImagemAnotada(analiseIA, exame.getId());
+
+            exame.setUrlImagemOriginal(urlImagemOriginal);
+            exame.setUrlImagemAnotada(urlImagemAnotada);
+            exame.setResultadoIa(toJson(analiseIA));
+            preencherPredicaoPrincipal(exame, analiseIA);
+
+            exameRepository.save(exame);
+            log.info(
+                    "Exame salvo com analise de IA. exameId={}, pacienteId={}, topPredictionLabel={}, topPredictionConfidence={}",
+                    exame.getId(),
+                    paciente.getId(),
+                    exame.getTopPredictionLabel(),
+                    exame.getTopPredictionConfidence());
+        } catch (RuntimeException e) {
+            log.error(
+                    "Erro ao criar exame. Limpando arquivos associados. exameId={}, urlImagemOriginal={}, urlImagemAnotada={}",
+                    exame.getId(),
+                    urlImagemOriginal,
+                    urlImagemAnotada,
+                    e);
+            fileStorageService.deletarPorUrl(urlImagemOriginal);
+            fileStorageService.deletarPorUrl(urlImagemAnotada);
+            throw e;
+        }
+
         return toResponse(exame);
     }
 
     public List<ExameResponseDTO> listarPorPaciente(Long pacienteId) {
-        return exameRepository.findByPacienteId(pacienteId)
+        if (!pacienteRepository.existsById(pacienteId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente nao encontrado");
+        }
+
+        return exameRepository.findByPacienteIdOrderByDataExameDesc(pacienteId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -50,14 +99,49 @@ public class ExameService {
 
     public ExameResponseDTO buscarPorId(Long id) {
         Exame exame = exameRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exame nao encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Exame nao encontrado"));
         return toResponse(exame);
     }
 
+    @Transactional
     public void deletar(Long id) {
-        exameRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exame nao encontrado"));
-        exameRepository.deleteById(id);
+        Exame exame = exameRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Exame nao encontrado"));
+
+        exameRepository.delete(exame);
+        fileStorageService.deletarPorUrl(exame.getUrlImagemOriginal());
+        fileStorageService.deletarPorUrl(exame.getUrlImagemAnotada());
+    }
+
+    private Exame novoExame(Paciente paciente) {
+        Exame exame = new Exame();
+        exame.setPaciente(paciente);
+        return exame;
+    }
+
+    private void preencherPredicaoPrincipal(Exame exame, AiPredictionResponseDTO analiseIA) {
+        if (analiseIA == null || analiseIA.getTopPrediction() == null) {
+            return;
+        }
+
+        AiPredictionItemDTO topPrediction = analiseIA.getTopPrediction();
+        exame.setTopPredictionLabel(topPrediction.getLabel());
+        exame.setTopPredictionConfidence(topPrediction.getConfidence());
+    }
+
+    private String getUrlImagemAnotada(AiPredictionResponseDTO analiseIA, Long exameId) {
+        if (analiseIA == null) {
+            return null;
+        }
+
+        if (analiseIA.getAnnotatedImageUrl() != null && !analiseIA.getAnnotatedImageUrl().isBlank()) {
+            return analiseIA.getAnnotatedImageUrl();
+        }
+
+        return fileStorageService.salvarBase64Exame(
+                analiseIA.getAnnotatedImageBase64(),
+                exameId,
+                "anotada");
     }
 
     private ExameResponseDTO toResponse(Exame exame) {

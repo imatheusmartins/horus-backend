@@ -15,6 +15,9 @@ src/main/resources/application-local.yml
 *.log
 logs/
 
+### Uploaded files ###
+uploads/
+
 ### STS ###
 .apt_generated
 .classpath

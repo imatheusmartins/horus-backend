@@ -26,6 +26,10 @@ public class Exame {
     @Column(columnDefinition = "TEXT")
     private String resultadoIa;
 
+    private String topPredictionLabel;
+
+    private Double topPredictionConfidence;
+
     private LocalDateTime dataExame;
 
     @PrePersist
