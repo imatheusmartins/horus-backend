@@ -15,6 +15,12 @@ public class AiPredictionResponseDTO {
     @JsonProperty("top_prediction")
     private AiPredictionItemDTO topPrediction;
 
+    @JsonProperty("annotated_image_url")
+    private String annotatedImageUrl;
+
+    @JsonProperty("annotated_image_base64")
+    private String annotatedImageBase64;
+
     private List<AiPredictionItemDTO> predictions;
     private List<AiDetectionItemDTO> detections;
 }

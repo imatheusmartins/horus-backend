@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface ExameRepository extends JpaRepository<Exame, Long> {
-    List<Exame> findByPacienteId(Long pacienteId);
+    List<Exame> findByPacienteIdOrderByDataExameDesc(Long pacienteId);
 }

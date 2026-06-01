@@ -22,9 +22,12 @@ public class Exame {
 
     private String urlImagemAnotada;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String resultadoIa;
+
+    private String topPredictionLabel;
+
+    private Double topPredictionConfidence;
 
     private LocalDateTime dataExame;
 

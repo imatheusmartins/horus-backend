@@ -31,11 +31,6 @@ Variaveis principais:
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
-- `STORAGE_ENDPOINT`
-- `STORAGE_ACCESS_KEY`
-- `STORAGE_SECRET_KEY`
-- `STORAGE_BUCKET`
-- `STORAGE_PUBLIC_BASE_URL`
 - `AI_API_BASE_URL`
 - `AI_API_PREDICT_PATH`
 - `SERVER_PORT`
@@ -82,7 +77,6 @@ Se a prioridade for manter o projeto gratis, a melhor rota hoje e:
 
 - Render Free para o backend
 - Supabase para o PostgreSQL
-- Supabase Storage para os arquivos
 
 Se a prioridade for simplificar a infraestrutura e voces puderem aceitar um custo baixo, o Railway continua sendo a alternativa mais simples.
 
@@ -91,7 +85,6 @@ O projeto ficou pronto para PaaS com:
 - suporte a `PORT` em producao
 - endpoint `GET /health` para health checks
 - `Dockerfile` para deploy consistente
-- suporte a URL publica estavel para storage compativel com S3 via `STORAGE_PUBLIC_BASE_URL`
 
 Um guia objetivo de deploy esta em [docs/deploy-tcc.md](docs/deploy-tcc.md).
 
