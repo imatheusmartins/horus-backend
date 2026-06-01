@@ -86,6 +86,7 @@ public class ExameService {
         return toResponse(exame);
     }
 
+    @Transactional(readOnly = true)
     public List<ExameResponseDTO> listarPorPaciente(Long pacienteId) {
         if (!pacienteRepository.existsById(pacienteId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente nao encontrado");
@@ -97,6 +98,7 @@ public class ExameService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ExameResponseDTO buscarPorId(Long id) {
         Exame exame = exameRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Exame nao encontrado"));
@@ -151,9 +153,32 @@ public class ExameService {
         response.setNomePaciente(exame.getPaciente().getNome());
         response.setUrlImagemOriginal(exame.getUrlImagemOriginal());
         response.setUrlImagemAnotada(exame.getUrlImagemAnotada());
-        response.setAnaliseIA(fromJson(exame.getResultadoIa()));
+        response.setAnaliseIA(getAnaliseIa(exame));
         response.setDataExame(exame.getDataExame());
         return response;
+    }
+
+    private AiPredictionResponseDTO getAnaliseIa(Exame exame) {
+        AiPredictionResponseDTO analiseIa = fromJson(exame.getResultadoIa(), exame.getId());
+        if (analiseIa != null) {
+            return analiseIa;
+        }
+
+        if (exame.getTopPredictionLabel() == null && exame.getTopPredictionConfidence() == null) {
+            return null;
+        }
+
+        AiPredictionItemDTO topPrediction = new AiPredictionItemDTO();
+        topPrediction.setLabel(exame.getTopPredictionLabel());
+        topPrediction.setConfidence(exame.getTopPredictionConfidence());
+        preencherDescricao(topPrediction);
+
+        AiPredictionResponseDTO fallback = new AiPredictionResponseDTO();
+        fallback.setTask("classify");
+        fallback.setTopPrediction(topPrediction);
+        fallback.setPredictions(List.of(topPrediction));
+        fallback.setDetections(List.of());
+        return fallback;
     }
 
     private String toJson(AiPredictionResponseDTO analiseIA) {
@@ -164,7 +189,7 @@ public class ExameService {
         }
     }
 
-    private AiPredictionResponseDTO fromJson(String resultadoIa) {
+    private AiPredictionResponseDTO fromJson(String resultadoIa, Long exameId) {
         if (resultadoIa == null || resultadoIa.isBlank()) {
             return null;
         }
@@ -172,7 +197,47 @@ public class ExameService {
         try {
             return objectMapper.readValue(resultadoIa, AiPredictionResponseDTO.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Erro ao desserializar resposta da IA", e);
+            log.warn(
+                    "Resultado da IA invalido ou legado. Retornando fallback. exameId={}, resultadoIaPreview={}",
+                    exameId,
+                    preview(resultadoIa),
+                    e);
+            return null;
         }
+    }
+
+    private void preencherDescricao(AiPredictionItemDTO prediction) {
+        if (prediction == null) {
+            return;
+        }
+
+        String descricao = descreverGrau(prediction.getLabel());
+        prediction.setDescription(descricao);
+        prediction.setDescricao(descricao);
+    }
+
+    private String descreverGrau(String label) {
+        if (label == null) {
+            return "Grau não identificado";
+        }
+
+        return switch (label) {
+            case "0" -> "Sem retinopatia diabética";
+            case "1" -> "Retinopatia leve";
+            case "2" -> "Retinopatia moderada";
+            case "3" -> "Retinopatia grave";
+            case "4" -> "Retinopatia diabética proliferativa";
+            default -> "Grau não identificado";
+        };
+    }
+
+    private String preview(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.length() <= 120
+                ? value
+                : value.substring(0, 120) + "...";
     }
 }
