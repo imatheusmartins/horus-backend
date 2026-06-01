@@ -165,7 +165,7 @@ public class ExameService {
         }
 
         if (exame.getTopPredictionLabel() == null && exame.getTopPredictionConfidence() == null) {
-            return null;
+            return emptyAnaliseIa();
         }
 
         AiPredictionItemDTO topPrediction = new AiPredictionItemDTO();
@@ -177,6 +177,14 @@ public class ExameService {
         fallback.setTask("classify");
         fallback.setTopPrediction(topPrediction);
         fallback.setPredictions(List.of(topPrediction));
+        fallback.setDetections(List.of());
+        return fallback;
+    }
+
+    private AiPredictionResponseDTO emptyAnaliseIa() {
+        AiPredictionResponseDTO fallback = new AiPredictionResponseDTO();
+        fallback.setTask("classify");
+        fallback.setPredictions(List.of());
         fallback.setDetections(List.of());
         return fallback;
     }
@@ -197,11 +205,19 @@ public class ExameService {
         try {
             return objectMapper.readValue(resultadoIa, AiPredictionResponseDTO.class);
         } catch (JsonProcessingException e) {
+            if (resultadoIa.matches("\\d+")) {
+                log.warn(
+                        "Resultado da IA parece ser um OID legado do mapeamento antigo com LOB. Retornando fallback. exameId={}, resultadoIa={}",
+                        exameId,
+                        resultadoIa);
+                return null;
+            }
+
             log.warn(
-                    "Resultado da IA invalido ou legado. Retornando fallback. exameId={}, resultadoIaPreview={}",
+                    "Resultado da IA invalido ou legado. Retornando fallback. exameId={}, resultadoIaPreview={}, erro={}",
                     exameId,
                     preview(resultadoIa),
-                    e);
+                    e.getOriginalMessage());
             return null;
         }
     }
@@ -218,16 +234,16 @@ public class ExameService {
 
     private String descreverGrau(String label) {
         if (label == null) {
-            return "Grau não identificado";
+            return "Grau nao identificado";
         }
 
         return switch (label) {
-            case "0" -> "Sem retinopatia diabética";
+            case "0" -> "Sem retinopatia diabetica";
             case "1" -> "Retinopatia leve";
             case "2" -> "Retinopatia moderada";
             case "3" -> "Retinopatia grave";
-            case "4" -> "Retinopatia diabética proliferativa";
-            default -> "Grau não identificado";
+            case "4" -> "Retinopatia diabetica proliferativa";
+            default -> "Grau nao identificado";
         };
     }
 
