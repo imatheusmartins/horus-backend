@@ -64,12 +64,16 @@ No Windows:
 
 O projeto agora possui um workflow de CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) que:
 
-- roda em `push` para `main` e `develop`
-- roda em `pull_request`
+- roda em `push` para `main` e `dev`
+- roda em `pull_request` para `main` e `dev`
+- pode ser executado manualmente pelo GitHub Actions
 - configura Java 21
-- executa `./mvnw clean verify`
+- usa o profile `test`, com banco H2 em memoria
+- executa os testes automatizados
+- empacota a aplicacao com Maven
+- publica o `.jar` como artefato quando houver `push` na `main`
 
-Para CD simples, a recomendacao e usar deploy automatico da plataforma de hospedagem apos o CI passar, em vez de criar uma pipeline de release mais complexa.
+Esse ciclo funciona como uma esteira simples de CI para o backend: antes de uma mudanca chegar na branch principal, o GitHub valida build e testes. Para CD simples, a recomendacao e manter o deploy automatico da plataforma de hospedagem apos a `main` ser atualizada, em vez de criar uma pipeline de release mais complexa para o prototipo.
 
 ## Hospedagem recomendada
 
