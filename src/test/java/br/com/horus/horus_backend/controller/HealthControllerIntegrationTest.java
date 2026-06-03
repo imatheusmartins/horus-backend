@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("test")
 class HealthControllerIntegrationTest {
 
+    //Teste CI/CD
     @Autowired
     private ObjectMapper objectMapper;
 
